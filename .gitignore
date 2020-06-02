@@ -2,3 +2,4 @@
 /.idea/
 /.directory
 /.ipynb_checkpoints/
+*.h5
