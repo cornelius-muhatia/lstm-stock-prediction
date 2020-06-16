@@ -10,14 +10,13 @@ BASE_URL = "https://query1.finance.yahoo.com/v7/finance/download/IBM"
 STEPS = 5  # Previous days depends on time steps used to train the model
 
 
-def load_data(base_url, steps=7):
+def load_data(base_url, steps=7, current_date=datetime.today()):
     """
     Loads past 7 days data from yahoo finance
     :return: pandas data frame
     """
     # Account for weekends
     steps = steps + 2
-    current_date = datetime.today()
     start_date = current_date - timedelta(days=steps)
 
     start_date = int(datetime.timestamp(start_date))
@@ -43,17 +42,23 @@ def data_timesteps(features, steps=1):
 
 
 # Load data
-data = load_data(BASE_URL, STEPS)
-data = data.drop(columns=['Date', 'Adj Close', 'Volume', 'Close'], axis=1)
-print(data)
+current_date = datetime.strptime("2019/11/07 00:00", "%Y/%m/%d %H:%M")
+data = load_data(BASE_URL, STEPS, current_date)
+feature_data = data[['Open', 'High', 'Low']]
+
+label_data = data[['Close']]
+
 # Scale date
 features_scaler = MinMaxScaler()
-data = features_scaler.fit_transform(data)
-data = data_timesteps(data, STEPS)
-print(data.shape)
+feature_data = features_scaler.fit_transform(feature_data)
+feature_data = data_timesteps(feature_data, STEPS)
+
+labels_scaler = MinMaxScaler()
+labels_scaler.fit_transform(label_data)
+
 
 # Load model
 model = keras.models.load_model("ibm-prediction-model.h5")
-prediction = model.predict(data)
+prediction = model.predict(feature_data)
 
-print(prediction.shape)
+print(labels_scaler.inverse_transform(prediction))
